@@ -48,6 +48,16 @@ function App() {
 		handleSetStart(start)
 	}
 
+	const countEmptyBoard = (tempBoard) => {
+		let count = 0;
+		for (let i = 0; i < tempBoard.length; i++) {
+			if (tempBoard[i] != 0) {
+				count++;
+			}
+		}
+		return count;
+	}
+
 	const canMove = (tempBoard) => {
 		for (let i = 0; i < tempBoard.length; i++) {
 			if (tempBoard[i] == 0) {
@@ -113,25 +123,73 @@ function App() {
 		}
 	}, [])
 
-	const bestMove = useCallback(() => {
-		let bestScore = -Infinity;
+	const abminimax = useCallback((tempBoard, depth, player, alpha, beta) => {
+		let result = checkWinner(tempBoard);
+		if (result != null) {
+			return [-1, result];
+		} else {
+			if (depth == 9 || !canMove(tempBoard)) {
+				return [-1, 0];
+			}
+		}
 		let move;
-		let tempBoard = board.slice();
 		for (let i = 0; i < tempBoard.length; i++) {
 			if (tempBoard[i] == 0) {
-				tempBoard[i] = 1;
-				let score = minimax(tempBoard, 0, false);
+				tempBoard[i] = player;
+				let score = abminimax(tempBoard, depth + 1, player * -1, alpha, beta);
+				if (player == 1) {
+					if (score[1] > alpha) {
+						alpha = score[1];
+						move = i;
+					}
+				} else {
+					if (score[1] < beta) {
+						beta = score[1];
+						move = i;
+					}
+				}
 				tempBoard[i] = 0;
-				if (score > bestScore) {
-					bestScore = score;
-					move = i;
+				if (alpha >= beta) {
+					break;
 				}
 			}
 		}
+		if (player == 1) {
+			return [move, alpha];
+		} else {
+			return [move, beta];
+		}
+	}, [])
+
+	const bestMove = useCallback(() => {
+		if (countEmptyBoard(board) == 9) {
+			let move = Math.floor(Math.random() * 9);
+			let tempBoard = board.slice();
+			tempBoard[move] = 1;
+			setBoard(tempBoard);
+			setTurn(-1);
+			return;
+		}
+		// let bestScore = -Infinity;
+		let move;
+		let tempBoard = board.slice();
+		let ab = abminimax(tempBoard, 0, 1, -Infinity, Infinity);
+		move = ab[0]
+		// for (let i = 0; i < tempBoard.length; i++) {
+		// 	if (tempBoard[i] == 0) {
+		// 		tempBoard[i] = 1;
+		// 		let score = abminimax(tempBoard, 0, 1, -Infinity, Infinity);
+		// 		tempBoard[i] = 0;
+		// 		if (score > bestScore) {
+		// 			bestScore = score;
+		// 			move = i;
+		// 		}
+		// 	}
+		// }
 		tempBoard[move] = 1;
 		setBoard(tempBoard);
 		setTurn(-1);
-	}, [board, minimax])
+	}, [abminimax, board])
 
 	useEffect(() => {
 		if (playing) {
@@ -182,7 +240,7 @@ function App() {
 				<div className="grid grid-cols-3 gap-1">
 					{board.map((cell, index) => {
 						return <button className={"px-4 py-4 rounded-lg text-3xl font-medium flex items-center justify-center " + (cell == 0 ? "hover:bg-gray-500" : "cursor-not-allowed") + " " + (winnerLine.includes(index) ? "bg-gray-500" : "bg-gray-500/50")} key={index} onClick={() => {
-							if (cell == 0 && playing) {
+							if (cell == 0 && playing && turn == -1) {
 								let newBoard = board.slice();
 								newBoard[index] = -1;
 								setBoard(newBoard);
