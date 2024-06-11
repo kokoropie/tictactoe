@@ -51,7 +51,7 @@ function App() {
 	const countEmptyBoard = (tempBoard) => {
 		let count = 0;
 		for (let i = 0; i < tempBoard.length; i++) {
-			if (tempBoard[i] != 0) {
+			if (tempBoard[i] == 0) {
 				count++;
 			}
 		}
