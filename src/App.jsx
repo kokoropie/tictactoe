@@ -10,7 +10,8 @@ function App() {
 	const [symbols, setSymbols] = useState({});
 	const [winnerLine, setWinnerLine] = useState([]);
 
-	const delay = 500; // AI delay miliseconds
+	const delay = import.meta.env.VITE_AI_DELAY ?? 500; // AI delay miliseconds
+	console.log(delay)
 
 	const showCell = (cell) => {
 		if (cell == 0) {
