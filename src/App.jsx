@@ -11,7 +11,7 @@ function App() {
 	const [winnerLine, setWinnerLine] = useState([]);
 
 	const delay = import.meta.env.VITE_AI_DELAY ?? 500; // AI delay miliseconds
-	console.log(delay)
+	const usingAB = import.meta.env.VITE_USING_AB ?? true; // Using Alpha-Beta Pruning
 
 	const showCell = (cell) => {
 		if (cell == 0) {
@@ -171,26 +171,29 @@ function App() {
 			setTurn(-1);
 			return;
 		}
-		// let bestScore = -Infinity;
 		let move;
 		let tempBoard = board.slice();
-		let ab = abminimax(tempBoard, 0, 1, -Infinity, Infinity);
-		move = ab[0]
-		// for (let i = 0; i < tempBoard.length; i++) {
-		// 	if (tempBoard[i] == 0) {
-		// 		tempBoard[i] = 1;
-		// 		let score = abminimax(tempBoard, 0, 1, -Infinity, Infinity);
-		// 		tempBoard[i] = 0;
-		// 		if (score > bestScore) {
-		// 			bestScore = score;
-		// 			move = i;
-		// 		}
-		// 	}
-		// }
+		if (usingAB) {
+			let ab = abminimax(tempBoard, 0, 1, -Infinity, Infinity);
+			move = ab[0]
+		} else {
+			let bestScore = -Infinity;
+			for (let i = 0; i < tempBoard.length; i++) {
+				if (tempBoard[i] == 0) {
+					tempBoard[i] = 1;
+					let score = minimax(tempBoard, 0, false);
+					tempBoard[i] = 0;
+					if (score > bestScore) {
+						bestScore = score;
+						move = i;
+					}
+				}
+			}
+		}
 		tempBoard[move] = 1;
 		setBoard(tempBoard);
 		setTurn(-1);
-	}, [abminimax, board])
+	}, [abminimax, board, minimax, usingAB])
 
 	useEffect(() => {
 		if (playing) {
